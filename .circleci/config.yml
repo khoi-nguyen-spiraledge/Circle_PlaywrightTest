@@ -1,0 +1,32 @@
+version: 2.1
+
+jobs:
+  login-test:
+    docker:
+      - image: mcr.microsoft.com/playwright:v1.44.0-jammy
+
+    environment:
+      BASE_URL: http://127.0.0.1:3001
+      LOGIN_USERNAME: testuser
+      LOGIN_PASSWORD: "123456"
+
+    steps:
+      - checkout
+      - run: npm ci
+      - run: npm run ci:test
+      - store_artifacts:
+          path: playwright-report
+          destination: playwright-report
+      - store_artifacts:
+          path: test-results
+          destination: test-results
+
+workflows:
+  release-check:
+    jobs:
+      - login-test:
+          filters:
+            branches:
+              only:
+                - main
+                - release

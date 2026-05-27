@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Dashboard</title>
+    <link rel="stylesheet" href="/style.css" />
+  </head>
+  <body>
+    <main class="page">
+      <section class="dashboard-card" data-testid="dashboard">
+        <h1>Dashboard</h1>
+        <p class="subtitle">Login success. You are now inside the app.</p>
+        <button id="logout-button">Logout</button>
+      </section>
+    </main>
+
+    <script>
+      if (sessionStorage.getItem('isLoggedIn') !== 'true') {
+        window.location.href = '/login.html';
+      }
+
+      document.querySelector('#logout-button').addEventListener('click', function () {
+        sessionStorage.removeItem('isLoggedIn');
+        window.location.href = '/login.html';
+      });
+    </script>
+  </body>
+</html>

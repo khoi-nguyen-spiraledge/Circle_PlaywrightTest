@@ -1,0 +1,34 @@
+{
+  "name": "playwright-circleci-login-test",
+  "version": "1.0.0",
+  "description": "Demo login web app with Playwright tests and CircleCI self-hosted runner config.",
+  "main": "app/server.js",
+  "scripts": {
+    "start": "node app/server.js",
+    "app": "node app/server.js",
+    "test": "playwright test",
+    "test:login": "playwright test tests/login.spec.ts",
+    "test:headed": "playwright test --headed",
+    "test:debug": "playwright test --debug",
+    "report": "playwright show-report",
+    "ci:test": "start-server-and-test app http://127.0.0.1:3001 test:login"
+  },
+  "keywords": [
+    "playwright",
+    "circleci",
+    "login-test",
+    "automation"
+  ],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "@playwright/test": "^1.60.0",
+    "@types/node": "^25.9.1",
+    "dotenv": "^16.4.5",
+    "start-server-and-test": "^2.0.4",
+    "typescript": "^5.9.3"
+  },
+  "dependencies": {
+    "express": "^4.19.2"
+  }
+}
