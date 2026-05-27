@@ -21,6 +21,7 @@ export class LoginPage {
 
   async expectLoginSuccess(): Promise<void> {
     await expect(this.page).toHaveURL(/.*dashboard\.html/);
+    //await expect(this.page).toHaveURL(/.*dashboard\.html/);
     await expect(this.dashboard).toBeVisible();
     await expect(this.dashboard).toContainText('Login success');
   }
