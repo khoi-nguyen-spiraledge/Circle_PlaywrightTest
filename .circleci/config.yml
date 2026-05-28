@@ -12,14 +12,24 @@ jobs:
 
     steps:
       - checkout
-      - run: npm ci
-      - run: npm run ci:test
+
+      - run:
+          name: Install dependencies
+          command: npm ci
+
+      - run:
+          name: Install Playwright Browsers
+          command: npx playwright install chromium
+
+      - run:
+          name: Run Playwright Login Test
+          command: npm run ci:test
+
       - store_artifacts:
           path: playwright-report
-          destination: playwright-report
+
       - store_artifacts:
           path: test-results
-          destination: test-results
 
 workflows:
   release-check:
