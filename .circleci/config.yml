@@ -24,9 +24,4 @@ jobs:
 workflows:
   release-check:
     jobs:
-      - login-test:
-          filters:
-            branches:
-              only:
-                - main
-                - release
+      - login-test
