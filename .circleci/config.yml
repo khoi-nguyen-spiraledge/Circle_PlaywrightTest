@@ -63,36 +63,36 @@ jobs:
             gh auth status
 
       - run:
-    name: Auto-create PR and merge if tests pass
-    command: |
-      set -e
+          name: Auto-create PR and merge if tests pass
+          command: |
+            set -e
 
-      if [ "${CIRCLE_BRANCH}" = "main" ]; then
-        echo "Currently on main branch. Skipping auto-merge."
-        exit 0
-      fi
+            if [ "${CIRCLE_BRANCH}" = "main" ]; then
+              echo "Currently on main branch. Skipping auto-merge."
+              exit 0
+            fi
 
-      if [ -z "$GH_TOKEN" ]; then
-        echo "GH_TOKEN is missing"
-        exit 1
-      fi
+            if [ -z "$GH_TOKEN" ]; then
+              echo "GH_TOKEN is missing"
+              exit 1
+            fi
 
-      echo "Creating or finding PR for ${CIRCLE_BRANCH}..."
+            echo "Creating or finding PR for ${CIRCLE_BRANCH}..."
 
-      PR_URL=$(gh pr create \
-        --base main \
-        --head "${CIRCLE_BRANCH}" \
-        --title "Auto-merge: ${CIRCLE_BRANCH}" \
-        --body "This PR was automatically created by CircleCI after passing all automated tests." \
-        2>/dev/null || gh pr view "${CIRCLE_BRANCH}" --json url -q .url)
+            PR_URL=$(gh pr create \
+              --base main \
+              --head "${CIRCLE_BRANCH}" \
+              --title "Auto-merge: ${CIRCLE_BRANCH}" \
+              --body "This PR was automatically created by CircleCI after passing all automated tests." \
+              2>/dev/null || gh pr view "${CIRCLE_BRANCH}" --json url -q .url)
 
-      echo "PR URL: ${PR_URL}"
+            echo "PR URL: ${PR_URL}"
 
-      echo "Merging PR..."
-      gh pr merge "${PR_URL}" --merge --delete-branch
+            echo "Merging PR..."
+            gh pr merge "${PR_URL}" --merge --delete-branch
 
-      echo "PR merged successfully."
-    when: on_success
+            echo "PR merged successfully."
+          when: on_success
 
       - store_artifacts:
           path: playwright-report
