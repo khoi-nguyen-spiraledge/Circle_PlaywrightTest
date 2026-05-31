@@ -72,7 +72,12 @@ jobs:
               exit 0
             fi
 
-            echo "Automatically creating PR from ${CIRCLE_BRANCH} into main..."
+            if [ -z "$GH_TOKEN" ]; then
+              echo "GH_TOKEN is missing"
+              exit 1
+            fi
+
+            echo "Creating or finding PR for ${CIRCLE_BRANCH}..."
 
             PR_URL=$(gh pr create \
               --base main \
@@ -84,9 +89,7 @@ jobs:
             echo "PR URL: ${PR_URL}"
 
             echo "Merging PR..."
-            gh pr merge "${PR_URL}" \
-              --merge \
-              --delete-branch
+            gh pr merge "${PR_URL}" --merge --delete-branch
 
             echo "PR merged successfully."
           when: on_success
