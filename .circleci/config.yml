@@ -12,60 +12,89 @@ jobs:
 
     steps:
       - checkout
-      
-      - run: 
+
+      - run:
           name: Install dependencies
           command: npm ci
-          
+
       - run:
           name: Start local server
           command: npm run start
           background: true
-          
+
       - run:
           name: Wait for server to be ready
           command: npx wait-on http://127.0.0.1:3001 --timeout 30000
 
-      - run: 
+      - run:
           name: Run Playwright tests
           command: npm run ci:test
+
+      - run:
+          name: Install GitHub CLI
+          command: |
+            set -e
+            apt-get update
+            apt-get install -y curl gpg
+
+            mkdir -p -m 0755 /etc/apt/keyrings
+            curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg \
+              | gpg --dearmor -o /etc/apt/keyrings/githubcli-archive-keyring.gpg
+
+            chmod go+r /etc/apt/keyrings/githubcli-archive-keyring.gpg
+
+            echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" \
+              | tee /etc/apt/sources.list.d/github-cli.list > /dev/null
+
+            apt-get update
+            apt-get install -y gh
+
+      - run:
+          name: Check GH_TOKEN
+          command: |
+            set -e
+
+            if [ -z "$GH_TOKEN" ]; then
+              echo "GH_TOKEN is NOT available"
+              exit 1
+            fi
+
+            echo "GH_TOKEN is available"
+            gh auth status
 
       - run:
           name: Auto-create PR and merge if tests pass
           command: |
             set -e
-            if [ "${CIRCLE_BRANCH}" != "main" ]; then
-              echo "Automatically merging branch ${CIRCLE_BRANCH} into main..."
-              
-              # Install GitHub CLI
-              echo "Installing GitHub CLI..."
-              type -p curl >/dev/null || (apt-get update && apt-get install curl -y)
-              mkdir -p -m 0755 /etc/apt/keyrings
-              curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | gpg --dearmor -o /etc/apt/keyrings/githubcli-archive-keyring.gpg
-              chmod go+r /etc/apt/keyrings/githubcli-archive-keyring.gpg
-              echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | tee /etc/apt/sources.list.d/github-cli.list > /dev/null
-              apt-get update && apt-get install gh -y
-              
-              # --- SUPER FORCE TOKEN MAPPING ---
-              # This maps any possible variation of your token name to GH_TOKEN
-              export GH_TOKEN="${GH_TOKEN:-${GITHUB_TOKEN:-${Github_token}}}"
-              # ----------------------------------
-              
-              # 1. Automatically create a Pull Request via GitHub CLI
-              echo "Creating Pull Request..."
-              gh pr create --base main --head ${CIRCLE_BRANCH} --title "Auto-merge: ${CIRCLE_BRANCH}" --body "This PR was automatically created by CircleCI after passing all automated tests." || true
-              
-              # 2. Automatically merge the created PR into main and delete the feature branch
-              echo "Merging Pull Request and deleting the branch..."
-              gh pr merge ${CIRCLE_BRANCH} --merge --delete-branch || true
-            else
+
+            if [ "${CIRCLE_BRANCH}" = "main" ]; then
               echo "Currently on main branch. Skipping auto-merge."
+              exit 0
             fi
+
+            echo "Automatically creating PR from ${CIRCLE_BRANCH} into main..."
+
+            PR_URL=$(gh pr create \
+              --base main \
+              --head "${CIRCLE_BRANCH}" \
+              --title "Auto-merge: ${CIRCLE_BRANCH}" \
+              --body "This PR was automatically created by CircleCI after passing all automated tests." \
+              2>/dev/null || gh pr view "${CIRCLE_BRANCH}" --json url -q .url)
+
+            echo "PR URL: ${PR_URL}"
+
+            echo "Merging PR..."
+            gh pr merge "${PR_URL}" \
+              --merge \
+              --delete-branch
+
+            echo "PR merged successfully."
           when: on_success
 
       - store_artifacts:
           path: playwright-report
           destination: playwright-report
+
       - store_artifacts:
           path: test-results
           destination: test-results
