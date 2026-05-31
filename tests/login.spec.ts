@@ -9,7 +9,11 @@ test.describe('Login page', () => {
     const loginPage = new LoginPage(page);
 
     await loginPage.goto();
+    await page.waitForTimeout(1000);
+
     await loginPage.login(username, password);
+    await page.waitForTimeout(1000);
+
     await loginPage.expectLoginSuccess();
   });
 
@@ -17,7 +21,11 @@ test.describe('Login page', () => {
     const loginPage = new LoginPage(page);
 
     await loginPage.goto();
+    await page.waitForTimeout(1000);
+
     await loginPage.login('wrong_user', 'wrong_password');
+    await page.waitForTimeout(1000);
+
     await loginPage.expectLoginFailed();
   });
 });

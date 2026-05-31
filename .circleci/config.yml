@@ -3,7 +3,7 @@ version: 2.1
 jobs:
   login-test:
     docker:
-     - image: mcr.microsoft.com/playwright:v1.60.0-jammy
+      - image: mcr.microsoft.com/playwright:v1.60.0-jammy
 
     environment:
       BASE_URL: http://127.0.0.1:3001
@@ -12,8 +12,42 @@ jobs:
 
     steps:
       - checkout
-      - run: npm ci
-      - run: npm run ci:test
+      
+      - run: 
+          name: Install dependencies
+          command: npm ci
+          
+      - run:
+          name: Start local server
+          command: npm run start
+          background: true
+          
+      - run:
+          name: Wait for server to be ready
+          command: npx wait-on http://127.0.0.1:3001 --timeout 30000
+
+      - run: 
+          name: Run Playwright tests
+          command: npm run ci:test
+
+      - run:
+          name: Auto-create PR and merge if tests pass
+          command: |
+            if [ "${CIRCLE_BRANCH}" != "main" ]; then
+              echo "Automatically merging branch ${CIRCLE_BRANCH} into main..."
+              
+              export GITHUB_TOKEN=${GITHUB_TOKEN}
+              
+              # 1. Automatically create a Pull Request via GitHub CLI
+              gh pr create --base main --head ${CIRCLE_BRANCH} --title "Auto-merge: ${CIRCLE_BRANCH}" --body "This PR was automatically created by CircleCI after passing all automated tests." || true
+              
+              # 2. Automatically merge the created PR into main and delete the feature branch
+              gh pr merge ${CIRCLE_BRANCH} --merge --delete-branch || true
+            else
+              echo "Currently on main branch. Skipping auto-merge."
+            fi
+          when: on_success
+
       - store_artifacts:
           path: playwright-report
           destination: playwright-report
